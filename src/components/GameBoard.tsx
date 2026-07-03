@@ -17,6 +17,7 @@ interface GameBoardProps {
   onNewGame: () => void;
   onLoadGame: () => void;
   onReturnToMenu: () => void;
+  hideGameOverScreen?: boolean;
 }
 
 function isGameFinished(state: GameState): boolean {
@@ -32,6 +33,7 @@ export function GameBoard({
   onNewGame,
   onLoadGame,
   onReturnToMenu,
+  hideGameOverScreen = false,
 }: GameBoardProps) {
   const [selectedAttackerId, setSelectedAttackerId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export function GameBoard({
 
   return (
     <div className="game-board">
-      {isOver && (
+      {isOver && !hideGameOverScreen && (
         <GameOverScreen
           winner={game.winner}
           gameMode={gameMode}

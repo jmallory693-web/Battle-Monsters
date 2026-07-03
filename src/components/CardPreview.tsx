@@ -1,4 +1,4 @@
-import type { Rarity } from '../models/card';
+import { normalizeCreatureTypes, type Rarity } from '../models/card';
 import './CardPreview.css';
 
 export interface CardPreviewData {
@@ -9,6 +9,7 @@ export interface CardPreviewData {
   health: number;
   flavorText: string;
   rarity: Rarity;
+  creatureTypes?: string[];
 }
 
 interface CardPreviewProps {
@@ -25,6 +26,7 @@ const RARITY_LABEL: Record<Rarity, string> = {
 
 export function CardPreview({ card, className = '', size = 'full' }: CardPreviewProps) {
   const displayName = card.name.trim() || 'Unnamed Card';
+  const creatureTypes = normalizeCreatureTypes(card.creatureTypes);
 
   return (
     <article
@@ -61,6 +63,16 @@ export function CardPreview({ card, className = '', size = 'full' }: CardPreview
             <span className="card-preview__stat-value">{card.health}</span>
           </div>
         </div>
+
+        {creatureTypes.length > 0 && (
+          <ul className="card-preview__types" aria-label="Creature types">
+            {creatureTypes.map((type) => (
+              <li key={type} className="card-preview__type-tag">
+                {type}
+              </li>
+            ))}
+          </ul>
+        )}
 
         {size === 'full' && card.flavorText.trim() && (
           <p className="card-preview__flavor">"{card.flavorText.trim()}"</p>

@@ -41,6 +41,54 @@
   gap: 0.75rem;
 }
 
+.card-form__type-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.card-form__type-option,
+.card-form__type-custom button,
+.card-form__type-tag {
+  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #555;
+  background: rgba(255, 255, 255, 0.06);
+  color: #eee;
+  font: inherit;
+  cursor: pointer;
+}
+
+.card-form__type-option.selected {
+  background: rgba(79, 70, 229, 0.28);
+  border-color: rgba(129, 140, 248, 0.7);
+  color: #c7d2fe;
+}
+
+.card-form__type-custom {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.card-form__type-custom input {
+  flex: 1;
+}
+
+.card-form__type-tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.card-form__type-tag {
+  background: rgba(79, 70, 229, 0.16);
+  border-color: rgba(129, 140, 248, 0.55);
+  color: #c7d2fe;
+}
+
 .card-form__submit {
   padding: 0.65rem 1rem;
   border: none;

@@ -6,6 +6,8 @@ const links = [
   { to: '/creator', label: 'Creator' },
   { to: '/library', label: 'Library' },
   { to: '/deck-builder', label: 'Deck Builder' },
+  { to: '/ai-opponents', label: 'AI Opponents' },
+  { to: '/tournaments', label: 'Tournaments' },
   { to: '/play', label: 'Play' },
 ];
 

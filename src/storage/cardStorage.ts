@@ -1,4 +1,4 @@
-import { type Card, isCard } from '../models/card';
+import { cardFromUnknown, type Card } from '../models/card';
 
 const STORAGE_KEY = 'battle-monsters:cards';
 
@@ -8,7 +8,9 @@ function readRaw(): Card[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isCard);
+    return parsed
+      .map((item) => cardFromUnknown(item))
+      .filter((card): card is Card => card !== null);
   } catch {
     return [];
   }

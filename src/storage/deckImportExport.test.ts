@@ -27,6 +27,7 @@ function makeCard(id: string, overrides: Partial<Card> = {}): Card {
     health: overrides.health ?? 3,
     flavorText: '',
     rarity: overrides.rarity ?? 'common',
+    creatureTypes: overrides.creatureTypes ?? [],
     ...overrides,
   };
 }
@@ -67,7 +68,7 @@ beforeEach(() => {
 describe('export', () => {
   it('exporting one deck includes full card data', () => {
     const { deck, cards } = makeLegalDeckBundle('d1', 'My Deck', 'exp');
-    cards[0] = { ...cards[0], name: 'Rainbow Cat' };
+    cards[0] = { ...cards[0], name: 'Rainbow Cat', creatureTypes: ['Cat', 'Fairy'] };
     setupStorage(cards, [deck]);
 
     const exported = exportDeck('d1');
@@ -76,6 +77,7 @@ describe('export', () => {
     expect(exported.deck.name).toBe('My Deck');
     expect(exported.cards).toHaveLength(10);
     expect(exported.cards.find((c) => c.name === 'Rainbow Cat')).toBeTruthy();
+    expect(exported.cards.find((c) => c.name === 'Rainbow Cat')?.creatureTypes).toEqual(['Cat', 'Fairy']);
   });
 
   it('exporting all decks includes shared cards only once', () => {
@@ -176,6 +178,42 @@ describe('import', () => {
     const result = importDeckCollectionFile(JSON.stringify(file));
     expect(result.decksImported).toBe(2);
     expect(result.cardsImported).toBe(20);
+  });
+
+  it('preserves creature types during import and export', () => {
+    const { deck, cards } = makeLegalDeckBundle('typed-deck', 'Typed Deck', 'typed');
+    cards[0] = { ...cards[0], creatureTypes: ['Dragon', 'Elemental'] };
+    setupStorage(cards, [deck]);
+
+    const exported = exportDeck('typed-deck');
+    setupStorage([], []);
+    importDeckFile(JSON.stringify(exported));
+
+    const storedCards = JSON.parse(localStorage.getItem(CARDS_KEY)!) as Card[];
+    expect(storedCards.find((card) => card.id === cards[0]?.id)?.creatureTypes).toEqual([
+      'Dragon',
+      'Elemental',
+    ]);
+  });
+
+  it('accepts imported older cards without creatureTypes', () => {
+    const { deck, cards } = makeLegalDeckBundle('legacy-deck', 'Legacy Deck', 'legacy');
+    const legacyCards = cards.map((card) => {
+      const { creatureTypes: _creatureTypes, ...legacyCard } = card;
+      return legacyCard;
+    });
+    const file = {
+      ...buildDeckExportFile(deck, cards),
+      cards: legacyCards,
+    };
+
+    setupStorage([], []);
+
+    const result = importDeckFile(JSON.stringify(file));
+    expect(result.cardsImported).toBe(10);
+
+    const storedCards = JSON.parse(localStorage.getItem(CARDS_KEY)!) as Card[];
+    expect(storedCards.every((card) => Array.isArray(card.creatureTypes))).toBe(true);
   });
 });
 

@@ -1,5 +1,10 @@
 import type { Card } from '../models/card';
-import { isCard, validateCardInput, normalizeCardInput } from '../models/card';
+import {
+  cardFromUnknown,
+  normalizeCardInput,
+  normalizeCreatureTypes,
+  validateCardInput,
+} from '../models/card';
 import type { Deck, DeckEntry } from '../models/deck';
 import {
   normalizeEntries,
@@ -44,6 +49,8 @@ export interface ImportResult {
 }
 
 function cardsEqual(a: Card, b: Card): boolean {
+  const aTypes = normalizeCreatureTypes(a.creatureTypes);
+  const bTypes = normalizeCreatureTypes(b.creatureTypes);
   return (
     a.id === b.id &&
     a.name === b.name &&
@@ -52,7 +59,9 @@ function cardsEqual(a: Card, b: Card): boolean {
     a.attack === b.attack &&
     a.health === b.health &&
     a.flavorText === b.flavorText &&
-    a.rarity === b.rarity
+    a.rarity === b.rarity &&
+    aTypes.length === bTypes.length &&
+    aTypes.every((type, index) => type === bTypes[index])
   );
 }
 
@@ -163,14 +172,15 @@ function validateExportedCards(cards: unknown): Card[] {
   }
   const result: Card[] = [];
   for (const item of cards) {
-    if (!isCard(item)) {
+    const card = cardFromUnknown(item);
+    if (!card) {
       throw new Error('Export contains an invalid card.');
     }
-    const errors = validateCardInput(normalizeCardInput(item));
+    const errors = validateCardInput(normalizeCardInput(card));
     if (errors.length > 0) {
-      throw new Error(`Invalid card "${item.name}": ${errors[0]}`);
+      throw new Error(`Invalid card "${card.name}": ${errors[0]}`);
     }
-    result.push(item);
+    result.push(card);
   }
   return result;
 }

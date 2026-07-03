@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import type { Card } from '../models/card';
+import { COMMON_CREATURE_TYPES, type Card } from '../models/card';
 import {
   createDeck,
   countTotalCards,
@@ -8,8 +8,15 @@ import {
   MAX_COPIES_DEFAULT,
   MAX_COPIES_LEGENDARY,
   type DeckEntry,
+  type NewDeck,
 } from '../models/deck';
 import type { Deck } from '../models/deck';
+import {
+  generateAutoDeck,
+  validateGeneratedDeck,
+  type AutoDeckDifficulty,
+  type AutoDeckStyle,
+} from '../engine/autoDeckBuilder';
 import { loadCards } from '../storage/cardStorage';
 import { loadDecks, saveDeck, deleteDeck } from '../storage/deckStorage';
 import {
@@ -34,11 +41,44 @@ function getCount(entries: DeckEntry[], cardId: string): number {
   return entries.find((e) => e.cardId === cardId)?.count ?? 0;
 }
 
+const AUTO_DIFFICULTIES: AutoDeckDifficulty[] = ['easy', 'normal', 'hard'];
+const AUTO_STYLES: AutoDeckStyle[] = [
+  'random',
+  'balanced',
+  'aggressive',
+  'defensive',
+  'big-monsters',
+  'cheap-swarm',
+];
+
+function labelAutoStyle(style: AutoDeckStyle): string {
+  switch (style) {
+    case 'random':
+      return 'Random';
+    case 'balanced':
+      return 'Balanced';
+    case 'aggressive':
+      return 'Aggressive';
+    case 'defensive':
+      return 'Defensive';
+    case 'big-monsters':
+      return 'Big Monsters';
+    case 'cheap-swarm':
+      return 'Cheap Swarm';
+  }
+}
+
 export function DeckBuilder() {
   const [cards, setCards] = useState<Card[]>(() => loadCards());
   const [savedDecks, setSavedDecks] = useState<Deck[]>(() => loadDecks());
   const [deckName, setDeckName] = useState('');
   const [entries, setEntries] = useState<DeckEntry[]>([]);
+  const [autoDeckName, setAutoDeckName] = useState('Auto Deck');
+  const [autoDifficulty, setAutoDifficulty] = useState<AutoDeckDifficulty>('normal');
+  const [autoStyle, setAutoStyle] = useState<AutoDeckStyle>('balanced');
+  const [includeLegendary, setIncludeLegendary] = useState(true);
+  const [preferredCreatureType, setPreferredCreatureType] = useState('');
+  const [generatedDeck, setGeneratedDeck] = useState<NewDeck | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +88,7 @@ export function DeckBuilder() {
   const refresh = useCallback(() => {
     setCards(loadCards());
     setSavedDecks(loadDecks());
+    setGeneratedDeck(null);
   }, []);
 
   const total = countTotalCards({ entries });
@@ -55,6 +96,7 @@ export function DeckBuilder() {
     { name: deckName, entries },
     cards,
   );
+  const generatedValidation = generatedDeck ? validateGeneratedDeck(generatedDeck, cards) : null;
 
   function clearMessages() {
     setSuccess(null);
@@ -100,6 +142,72 @@ export function DeckBuilder() {
       refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save deck.');
+    }
+  }
+
+  function updateAutoDeckName(value: string) {
+    setAutoDeckName(value);
+    setGeneratedDeck(null);
+    clearMessages();
+  }
+
+  function updateAutoDifficulty(value: AutoDeckDifficulty) {
+    setAutoDifficulty(value);
+    setGeneratedDeck(null);
+    clearMessages();
+  }
+
+  function updateAutoStyle(value: AutoDeckStyle) {
+    setAutoStyle(value);
+    setGeneratedDeck(null);
+    clearMessages();
+  }
+
+  function updateIncludeLegendary(value: boolean) {
+    setIncludeLegendary(value);
+    setGeneratedDeck(null);
+    clearMessages();
+  }
+
+  function updatePreferredCreatureType(value: string) {
+    setPreferredCreatureType(value);
+    setGeneratedDeck(null);
+    clearMessages();
+  }
+
+  function handleGenerateAutoDeck() {
+    clearMessages();
+    try {
+      const deck = generateAutoDeck({
+        name: autoDeckName,
+        difficulty: autoDifficulty,
+        style: autoStyle,
+        includeLegendary,
+        preferredCreatureType: preferredCreatureType || undefined,
+        cards,
+      });
+      setGeneratedDeck(deck);
+      setSuccess(`Generated "${deck.name}". Review it, then save or regenerate.`);
+    } catch (err) {
+      setGeneratedDeck(null);
+      setError(err instanceof Error ? err.message : 'Could not generate a deck.');
+    }
+  }
+
+  function handleSaveGeneratedDeck() {
+    if (!generatedDeck || !generatedValidation?.valid) {
+      setError(generatedValidation?.errors[0]?.message ?? 'Generate a legal deck first.');
+      return;
+    }
+
+    try {
+      const deck = createDeck(generatedDeck);
+      saveDeck(deck, cards);
+      refresh();
+      setSuccess(`"${deck.name}" saved!`);
+      setAutoDeckName('Auto Deck');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not save generated deck.');
     }
   }
 
@@ -217,9 +325,127 @@ export function DeckBuilder() {
         {error && <p className="play-error">{error}</p>}
       </section>
 
+      <section className="auto-deck-panel">
+        <h2>Auto Deck Maker</h2>
+        <p className="deck-io-panel__hint">
+          Generate a legal 30-card deck from your current card library, then preview it before saving.
+        </p>
+        <div className="auto-deck-panel__grid">
+          <label>
+            Deck name
+            <input
+              value={autoDeckName}
+              onChange={(e) => updateAutoDeckName(e.target.value)}
+              placeholder="Auto Deck"
+            />
+          </label>
+          <label>
+            Difficulty
+            <select
+              value={autoDifficulty}
+              onChange={(e) => updateAutoDifficulty(e.target.value as AutoDeckDifficulty)}
+            >
+              {AUTO_DIFFICULTIES.map((difficulty) => (
+                <option key={difficulty} value={difficulty}>
+                  {difficulty[0]?.toUpperCase()}
+                  {difficulty.slice(1)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Style
+            <select
+              value={autoStyle}
+              onChange={(e) => updateAutoStyle(e.target.value as AutoDeckStyle)}
+            >
+              {AUTO_STYLES.map((style) => (
+                <option key={style} value={style}>
+                  {labelAutoStyle(style)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Preferred Creature Type
+            <select
+              value={preferredCreatureType}
+              onChange={(e) => updatePreferredCreatureType(e.target.value)}
+            >
+              <option value="">Any</option>
+              {COMMON_CREATURE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="auto-deck-panel__checkbox">
+            <span>Include Legendary cards?</span>
+            <input
+              type="checkbox"
+              checked={includeLegendary}
+              onChange={(e) => updateIncludeLegendary(e.target.checked)}
+            />
+          </label>
+        </div>
+        <div className="deck-io-panel__actions">
+          <button type="button" className="deck-io-btn" onClick={handleGenerateAutoDeck}>
+            Generate Deck
+          </button>
+          {generatedDeck && (
+            <button type="button" className="deck-io-btn" onClick={handleGenerateAutoDeck}>
+              Regenerate
+            </button>
+          )}
+        </div>
+
+        {generatedDeck && (
+          <div className="auto-deck-panel__preview">
+            <div className="auto-deck-panel__preview-header">
+              <div>
+                <h3>{generatedDeck.name}</h3>
+                <p>
+                  {autoDifficulty[0]?.toUpperCase()}
+                  {autoDifficulty.slice(1)} / {labelAutoStyle(autoStyle)}
+                  {preferredCreatureType ? ` / ${preferredCreatureType}` : ''}
+                </p>
+              </div>
+              <strong>{countTotalCards(generatedDeck)} / 30 cards</strong>
+            </div>
+            <ul className="auto-deck-panel__list" role="list">
+              {generatedDeck.entries.map((entry) => {
+                const card = cardsById.get(entry.cardId);
+                if (!card) return null;
+                return (
+                  <li key={entry.cardId} className="auto-deck-panel__row">
+                    <span>
+                      {card.name} ×{entry.count}
+                    </span>
+                    <span className="auto-deck-panel__meta">
+                      Cost {card.cost} / {card.attack} ATK / {card.health} HP
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="deck-io-panel__actions">
+              <button
+                type="button"
+                className="deck-io-btn"
+                disabled={!generatedValidation?.valid}
+                onClick={handleSaveGeneratedDeck}
+              >
+                Save Generated Deck
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
       {savedDecks.length > 0 && (
         <section className="deck-saved-list">
-          <h2>Saved Decks</h2>
+          <h2>Saved Decks ({savedDecks.length})</h2>
           <ul className="deck-saved-list__items" role="list">
             {savedDecks.map((deck) => (
               <li key={deck.id} className="deck-saved-list__row">

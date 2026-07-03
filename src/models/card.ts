@@ -1,6 +1,22 @@
 export type Rarity = 'common' | 'rare' | 'legendary';
 
 export const RARITIES: readonly Rarity[] = ['common', 'rare', 'legendary'] as const;
+export const COMMON_CREATURE_TYPES = [
+  'Cat',
+  'Dragon',
+  'Goblin',
+  'Beast',
+  'Fairy',
+  'Robot',
+  'Undead',
+  'Princess',
+  'Knight',
+  'Elemental',
+  'Bug',
+  'Fish',
+  'Bird',
+  'Dinosaur',
+] as const;
 
 export const CARD_LIMITS = {
   nameMaxLength: 40,
@@ -11,6 +27,8 @@ export const CARD_LIMITS = {
   attackMax: 20,
   healthMin: 1,
   healthMax: 20,
+  creatureTypesMaxCount: 3,
+  creatureTypeMaxLength: 20,
 } as const;
 
 export interface Card {
@@ -22,9 +40,21 @@ export interface Card {
   health: number;
   flavorText: string;
   rarity: Rarity;
+  creatureTypes: string[];
 }
 
-export type CardInput = Omit<Card, 'id'>;
+export interface CardInput {
+  name: string;
+  imageUrl: string;
+  cost: number;
+  attack: number;
+  health: number;
+  flavorText: string;
+  rarity: Rarity;
+  creatureTypes?: string[];
+}
+
+export type NormalizedCardInput = Omit<Card, 'id'>;
 
 export type NewCard = CardInput;
 
@@ -33,7 +63,26 @@ function clampInt(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, Math.floor(value)));
 }
 
-export function normalizeCardInput(input: CardInput): CardInput {
+export function normalizeCreatureTypes(types: readonly string[] | null | undefined): string[] {
+  if (!Array.isArray(types)) return [];
+
+  const result: string[] = [];
+  const seen = new Set<string>();
+
+  for (const rawType of types) {
+    if (typeof rawType !== 'string') continue;
+    const trimmed = rawType.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(trimmed);
+  }
+
+  return result;
+}
+
+export function normalizeCardInput(input: CardInput): NormalizedCardInput {
   return {
     name: input.name.trim().slice(0, CARD_LIMITS.nameMaxLength),
     imageUrl: input.imageUrl,
@@ -42,11 +91,13 @@ export function normalizeCardInput(input: CardInput): CardInput {
     health: clampInt(input.health, CARD_LIMITS.healthMin, CARD_LIMITS.healthMax),
     flavorText: input.flavorText.trim().slice(0, CARD_LIMITS.flavorTextMaxLength),
     rarity: input.rarity,
+    creatureTypes: normalizeCreatureTypes(input.creatureTypes),
   };
 }
 
 export function validateCardInput(input: CardInput): string[] {
   const errors: string[] = [];
+  const creatureTypes = normalizeCreatureTypes(input.creatureTypes);
 
   if (!input.name.trim()) {
     errors.push('Card name is required.');
@@ -76,6 +127,14 @@ export function validateCardInput(input: CardInput): string[] {
 
   if (!isRarity(input.rarity)) {
     errors.push('Invalid rarity.');
+  }
+
+  if (creatureTypes.length > CARD_LIMITS.creatureTypesMaxCount) {
+    errors.push(`Cards can have at most ${CARD_LIMITS.creatureTypesMaxCount} creature types.`);
+  }
+
+  if (creatureTypes.some((type) => type.length > CARD_LIMITS.creatureTypeMaxLength)) {
+    errors.push(`Creature type names must be at most ${CARD_LIMITS.creatureTypeMaxLength} characters.`);
   }
 
   return errors;
@@ -117,8 +176,31 @@ export function isCard(value: unknown): value is Card {
     typeof c.attack === 'number' &&
     typeof c.health === 'number' &&
     typeof c.flavorText === 'string' &&
+    (typeof c.creatureTypes === 'undefined' ||
+      (Array.isArray(c.creatureTypes) && c.creatureTypes.every((type) => typeof type === 'string'))) &&
     isRarity(c.rarity)
   );
+}
+
+export function cardFromUnknown(value: unknown): Card | null {
+  if (!isCard(value)) return null;
+
+  const card = value as Card & { creatureTypes?: string[] };
+
+  try {
+    return cardWithId(card.id, {
+      name: card.name,
+      imageUrl: card.imageUrl,
+      cost: card.cost,
+      attack: card.attack,
+      health: card.health,
+      flavorText: card.flavorText,
+      rarity: card.rarity,
+      creatureTypes: normalizeCreatureTypes(card.creatureTypes),
+    });
+  } catch {
+    return null;
+  }
 }
 
 export function cardToInput(card: Card): CardInput {
@@ -130,5 +212,6 @@ export function cardToInput(card: Card): CardInput {
     health: card.health,
     flavorText: card.flavorText,
     rarity: card.rarity,
+    creatureTypes: normalizeCreatureTypes(card.creatureTypes),
   };
 }

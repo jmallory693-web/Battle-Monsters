@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { createCard, validateCardInput, cardWithId, CARD_LIMITS } from './card';
+import {
+  createCard,
+  validateCardInput,
+  cardWithId,
+  normalizeCardInput,
+  CARD_LIMITS,
+} from './card';
 
 const validInput = {
   name: 'Rainbow Cat',
@@ -9,6 +15,7 @@ const validInput = {
   health: 5,
   flavorText: 'A colorful fighter.',
   rarity: 'common' as const,
+  creatureTypes: ['Cat'],
 };
 
 describe('validateCardInput', () => {
@@ -45,6 +52,27 @@ describe('validateCardInput', () => {
     const long = 'x'.repeat(CARD_LIMITS.flavorTextMaxLength + 1);
     expect(validateCardInput({ ...validInput, flavorText: long }).length).toBeGreaterThan(0);
   });
+
+  it('accepts optional creature types', () => {
+    expect(validateCardInput({ ...validInput, creatureTypes: [] })).toEqual([]);
+    expect(validateCardInput({ ...validInput, creatureTypes: undefined })).toEqual([]);
+  });
+
+  it('limits creature types to three', () => {
+    const errors = validateCardInput({
+      ...validInput,
+      creatureTypes: ['Cat', 'Fairy', 'Dragon', 'Bird'],
+    });
+    expect(errors.some((e) => e.includes('at most 3 creature types'))).toBe(true);
+  });
+
+  it('enforces creature type name length', () => {
+    const errors = validateCardInput({
+      ...validInput,
+      creatureTypes: ['x'.repeat(CARD_LIMITS.creatureTypeMaxLength + 1)],
+    });
+    expect(errors.some((e) => e.includes('Creature type names'))).toBe(true);
+  });
 });
 
 describe('createCard', () => {
@@ -63,5 +91,16 @@ describe('cardWithId', () => {
   it('preserves the provided id', () => {
     const card = cardWithId('fixed-id', validInput);
     expect(card.id).toBe('fixed-id');
+  });
+});
+
+describe('normalizeCardInput', () => {
+  it('removes duplicate creature types and trims whitespace', () => {
+    const normalized = normalizeCardInput({
+      ...validInput,
+      creatureTypes: [' Cat ', 'Fairy', 'cat', 'Fairy ', '  '],
+    });
+
+    expect(normalized.creatureTypes).toEqual(['Cat', 'Fairy']);
   });
 });

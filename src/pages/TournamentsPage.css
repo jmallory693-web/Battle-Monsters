@@ -1,0 +1,138 @@
+.tournaments-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.tournament-saves,
+.tournament-setup,
+.tournament-active,
+.tournament-summary,
+.tournament-result {
+  padding: 1rem 1.25rem;
+  border: 1px solid #444;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tournament-saves h2,
+.tournament-setup h2,
+.tournament-summary h2,
+.tournament-result h2 {
+  margin-top: 0;
+}
+
+.tournament-saves__list,
+.tournament-result__rounds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tournament-saves__row,
+.tournament-result__round {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.tournament-saves__row p,
+.tournament-summary p,
+.tournament-result p,
+.tournament-saves__row strong + p {
+  margin: 0.25rem 0 0;
+  color: #a5b4fc;
+}
+
+.tournament-saves__actions,
+.tournament-active__actions,
+.tournament-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.tournament-saves__actions button,
+.tournament-active__actions button,
+.tournament-result__actions button,
+.tournament-setup__start {
+  padding: 0.65rem 0.95rem;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tournament-setup__start {
+  background: #16a34a;
+  margin-top: 1rem;
+}
+
+.tournament-active__danger {
+  background: rgba(220, 38, 38, 0.75) !important;
+}
+
+.tournament-active__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.tournament-setup__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.9rem;
+}
+
+.tournament-setup label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.tournament-setup input,
+.tournament-setup select {
+  padding: 0.55rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #0f0f1a;
+  color: #eee;
+}
+
+.tournament-setup__notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.9rem;
+}
+
+.tournament-setup__notes p,
+.tournament-summary blockquote {
+  margin: 0;
+}
+
+.tournament-summary blockquote {
+  margin-top: 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid #4f46e5;
+  color: #d1d5db;
+}
+
+@media (max-width: 720px) {
+  .tournament-saves__row,
+  .tournament-result__round,
+  .tournament-active__header {
+    flex-direction: column;
+  }
+}

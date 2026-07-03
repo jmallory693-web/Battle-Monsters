@@ -33,6 +33,7 @@ function makeCard(overrides: Partial<Card> = {}): Card {
     health: overrides.health ?? 3,
     flavorText: '',
     rarity: 'common',
+    creatureTypes: overrides.creatureTypes ?? [],
     ...overrides,
   };
 }

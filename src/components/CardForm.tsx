@@ -1,9 +1,11 @@
 import { useState, type FormEvent, type ChangeEvent } from 'react';
 import {
+  COMMON_CREATURE_TYPES,
   createCard,
   cardWithId,
   validateCardInput,
   normalizeCardInput,
+  normalizeCreatureTypes,
   CARD_LIMITS,
   RARITIES,
   cardToInput,
@@ -24,6 +26,7 @@ const EMPTY_FORM: CardPreviewData = {
   health: 1,
   flavorText: '',
   rarity: 'common',
+  creatureTypes: [],
 };
 
 interface CardFormProps {
@@ -41,6 +44,7 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [imageProcessing, setImageProcessing] = useState(false);
+  const [customCreatureType, setCustomCreatureType] = useState('');
 
   const decksUsingCard =
     isEdit && editingCard ? getDecksUsingCard(editingCard.id) : [];
@@ -49,6 +53,38 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
     setSuccessMessage(null);
     setErrorMessage(null);
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function setCreatureTypes(nextTypes: string[]) {
+    const normalizedTypes = normalizeCreatureTypes(nextTypes);
+    const validationErrors = validateCardInput({ ...form, creatureTypes: normalizedTypes }).filter(
+      (message) => message.toLowerCase().includes('creature type'),
+    );
+    if (validationErrors.length > 0) {
+      setErrorMessage(validationErrors[0]);
+      return;
+    }
+    updateField('creatureTypes', normalizedTypes);
+  }
+
+  function toggleCreatureType(type: string) {
+    const current = normalizeCreatureTypes(form.creatureTypes);
+    if (current.includes(type)) {
+      setCreatureTypes(current.filter((existing) => existing !== type));
+      return;
+    }
+    setCreatureTypes([...current, type]);
+  }
+
+  function handleAddCustomCreatureType() {
+    const trimmed = customCreatureType.trim();
+    if (!trimmed) return;
+    setCreatureTypes([...(form.creatureTypes ?? []), trimmed]);
+    setCustomCreatureType('');
+  }
+
+  function removeCreatureType(type: string) {
+    setCreatureTypes((form.creatureTypes ?? []).filter((existing) => existing !== type));
   }
 
   async function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
@@ -72,6 +108,7 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
 
   function resetForm() {
     setForm(EMPTY_FORM);
+    setCustomCreatureType('');
     const input = document.getElementById('card-image-input') as HTMLInputElement | null;
     if (input) input.value = '';
   }
@@ -222,6 +259,60 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
             ))}
           </select>
         </label>
+
+        <div className="card-form__field">
+          <span>
+            Creature types (optional, up to {CARD_LIMITS.creatureTypesMaxCount})
+          </span>
+          <div className="card-form__type-picker">
+            {COMMON_CREATURE_TYPES.map((type) => {
+              const selected = (form.creatureTypes ?? []).includes(type);
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  className={`card-form__type-option ${selected ? 'selected' : ''}`.trim()}
+                  onClick={() => toggleCreatureType(type)}
+                >
+                  {type}
+                </button>
+              );
+            })}
+          </div>
+          <div className="card-form__type-custom">
+            <input
+              type="text"
+              value={customCreatureType}
+              onChange={(e) => setCustomCreatureType(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleAddCustomCreatureType();
+                }
+              }}
+              placeholder="Add custom type"
+              maxLength={CARD_LIMITS.creatureTypeMaxLength}
+            />
+            <button type="button" onClick={handleAddCustomCreatureType}>
+              Add Type
+            </button>
+          </div>
+          {(form.creatureTypes ?? []).length > 0 && (
+            <ul className="card-form__type-tags" role="list">
+              {(form.creatureTypes ?? []).map((type) => (
+                <li key={type}>
+                  <button
+                    type="button"
+                    className="card-form__type-tag"
+                    onClick={() => removeCreatureType(type)}
+                  >
+                    {type} ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <div className="card-form__buttons">
           <button type="submit" className="card-form__submit" disabled={imageProcessing}>
