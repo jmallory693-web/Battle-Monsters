@@ -1,0 +1,69 @@
+.game-over {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 1rem;
+}
+
+.game-over__card {
+  background: linear-gradient(160deg, #2a2a4e 0%, #1a1a2e 100%);
+  border: 3px solid #fbbf24;
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.game-over__emoji {
+  font-size: 3rem;
+  margin: 0 0 0.5rem;
+}
+
+.game-over__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+.game-over__winner {
+  margin: 0 0 1.5rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.game-over__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.game-over__btn {
+  padding: 0.75rem 1rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  background: #4c1d95;
+  color: #fff;
+  cursor: pointer;
+}
+
+.game-over__btn--primary {
+  background: #22c55e;
+}
+
+.game-over__btn--ghost {
+  background: transparent;
+  border: 1px solid #555;
+  color: #ccc;
+}
+
+.game-over__btn:hover {
+  filter: brightness(1.1);
+}

@@ -1,0 +1,213 @@
+.play-menu__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 280px;
+  margin-top: 1.5rem;
+}
+
+.play-menu__btn {
+  padding: 0.85rem 1.25rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: 1px solid #444;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #eee;
+  cursor: pointer;
+}
+
+.play-menu__btn--primary {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: #fff;
+}
+
+.play-menu__btn--continue {
+  background: #4c1d95;
+  border-color: #4c1d95;
+  color: #fff;
+}
+
+.play-setup__mode {
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.play-setup__mode label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.play-setup__hint {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.play-setup__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 320px;
+}
+
+.play-setup__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.play-setup__form select {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #1a1a28;
+  color: #eee;
+}
+
+.play-setup__start {
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: #fff;
+  cursor: pointer;
+}
+
+.play-setup__warn {
+  color: #fbbf24;
+}
+
+.play-back {
+  margin-bottom: 1rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.play-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.play-header__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.play-save {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.play-save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.play-new-game {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.play-error {
+  color: #fca5a5;
+  margin-top: 0.75rem;
+}
+
+.play-success {
+  color: #86efac;
+  margin-top: 0.75rem;
+}
+
+.play-ai-thinking {
+  text-align: center;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.save-dialog {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.save-dialog__box {
+  background: #1a1a2e;
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: min(360px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.save-dialog__box h3 {
+  margin: 0;
+}
+
+.save-dialog__box label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.save-dialog__box input {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: #0f0f1a;
+  color: #eee;
+}
+
+.save-dialog__buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.save-dialog__buttons button {
+  flex: 1;
+  padding: 0.6rem;
+  border: none;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.save-dialog__cancel {
+  background: #444 !important;
+}

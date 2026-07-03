@@ -1,0 +1,85 @@
+.load-game__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.load-game__header h2 {
+  margin: 0;
+}
+
+.load-game__back {
+  padding: 0.4rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background: transparent;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.load-game__empty {
+  color: #888;
+  text-align: center;
+  padding: 2rem;
+  border: 1px dashed #444;
+  border-radius: 8px;
+}
+
+.load-game__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.load-game__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.load-game__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.load-game__meta {
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.load-game__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.load-game__actions button {
+  padding: 0.4rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: #4c1d95;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.load-game__actions button:disabled {
+  background: #444;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.load-game__delete {
+  background: rgba(220, 38, 38, 0.25) !important;
+  color: #fca5a5 !important;
+}

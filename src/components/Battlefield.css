@@ -1,0 +1,119 @@
+.battlefield-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.battlefield__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.battlefield {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.battlefield--empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+  border: 2px dashed #333;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.battlefield__monster {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 100px;
+  padding: 0.6rem 0.75rem;
+  border: 3px solid #555;
+  border-radius: 12px;
+  background: #1a1a28;
+  color: #eee;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.battlefield__monster--common { border-color: #9ca3af; }
+.battlefield__monster--rare { border-color: #3b82f6; background: #1a2040; }
+.battlefield__monster--legendary {
+  border-color: #f59e0b;
+  background: linear-gradient(160deg, #3d2e08, #1a1408);
+}
+
+.battlefield__monster--can-attack {
+  border-color: #22c55e;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+  animation: pulse-ready 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-ready {
+  0%, 100% { box-shadow: 0 0 8px rgba(34, 197, 94, 0.3); }
+  50% { box-shadow: 0 0 16px rgba(34, 197, 94, 0.6); }
+}
+
+.battlefield__monster--selected {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+  transform: scale(1.05);
+}
+
+.battlefield__monster--target:not(:disabled) {
+  border-color: #ef4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+}
+
+.battlefield__monster--sleeping {
+  opacity: 0.55;
+  filter: grayscale(0.3);
+  cursor: not-allowed;
+}
+
+.battlefield__monster:disabled {
+  cursor: not-allowed;
+}
+
+.battlefield__name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.battlefield__stats {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.battlefield__atk { color: #fca5a5; }
+.battlefield__hp { color: #86efac; }
+
+.battlefield__status {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #fbbf24;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.battlefield__ready {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #86efac;
+  text-transform: uppercase;
+}

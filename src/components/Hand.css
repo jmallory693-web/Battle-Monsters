@@ -1,0 +1,81 @@
+.hand {
+  border: 2px dashed #4c1d95;
+  border-radius: 12px;
+  padding: 1rem;
+  background: rgba(76, 29, 149, 0.08);
+}
+
+.hand__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+}
+
+.hand__hint {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #999;
+}
+
+.hand__empty {
+  margin: 0;
+  color: #777;
+  text-align: center;
+  padding: 1rem;
+}
+
+.hand__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hand__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 150px;
+}
+
+.hand__item--disabled {
+  opacity: 0.85;
+}
+
+.hand__card-wrap--dim {
+  filter: grayscale(0.4) brightness(0.75);
+}
+
+.hand__reason {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fbbf24;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.hand__play-btn {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: #22c55e;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.hand__play-btn:hover:not(:disabled) {
+  background: #16a34a;
+  transform: scale(1.03);
+}
+
+.hand__play-btn:disabled {
+  background: #374151;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
