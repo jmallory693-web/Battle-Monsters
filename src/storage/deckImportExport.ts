@@ -95,6 +95,17 @@ export function collectCardsForDecks(decks: Deck[], allCards: Card[]): Card[] {
     .filter((c): c is Card => c !== undefined);
 }
 
+function assertDecksHaveAllCards(decks: Deck[], cards: Card[]): void {
+  const cardIds = new Set(cards.map((card) => card.id));
+  for (const deck of decks) {
+    for (const entry of deck.entries) {
+      if (!cardIds.has(entry.cardId)) {
+        throw new Error(`Deck "${deck.name}" references missing card id: ${entry.cardId}`);
+      }
+    }
+  }
+}
+
 function buildExportTimestamp(): string {
   return new Date().toISOString();
 }
@@ -133,17 +144,15 @@ export function exportDeck(deckId: string): DeckExportFile {
     throw new Error(`Deck with id "${deckId}" not found.`);
   }
   const allCards = loadCards();
+  assertDecksHaveAllCards([deck], allCards);
   const cards = collectCardsForDeck(deck, allCards);
-  const requiredIds = new Set(deck.entries.map((e) => e.cardId));
-  if (cards.length !== requiredIds.size) {
-    throw new Error('Deck references cards that are missing from the library.');
-  }
   return buildDeckExportFile(deck, cards);
 }
 
 export function exportAllDecks(): DeckCollectionExportFile {
   const decks = loadDecks();
   const allCards = loadCards();
+  assertDecksHaveAllCards(decks, allCards);
   const cards = collectCardsForDecks(decks, allCards);
   return buildCollectionExportFile(decks, cards);
 }

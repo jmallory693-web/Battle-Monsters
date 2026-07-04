@@ -5,6 +5,7 @@ import {
   type SavedGameMeta,
   isGameState,
 } from '../engine/gameState';
+import { readStoredJson, writeStoredJson, writeStoredString } from './localStorageSafety';
 
 const SAVES_KEY = 'battle-monsters:game-saves';
 const LAST_SAVE_ID_KEY = 'battle-monsters:last-save-id';
@@ -29,20 +30,33 @@ function isSavedGame(value: unknown): value is SavedGame {
   );
 }
 
-function readRaw(): SavedGame[] {
-  try {
-    const raw = localStorage.getItem(SAVES_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isSavedGame);
-  } catch {
-    return [];
+export function parseStoredSaves(value: unknown): SavedGame[] {
+  if (!Array.isArray(value)) {
+    throw new Error('Expected a saved game array.');
   }
+  return value.map((item, index) => {
+    if (!isSavedGame(item)) {
+      throw new Error(`Saved game ${index + 1} is invalid.`);
+    }
+    return item;
+  });
+}
+
+function readRaw(): SavedGame[] {
+  return readStoredJson({
+    storageKey: SAVES_KEY,
+    entityName: 'saved games',
+    createEmpty: () => [],
+    parse: parseStoredSaves,
+  });
 }
 
 function writeAll(saves: SavedGame[]): void {
-  localStorage.setItem(SAVES_KEY, JSON.stringify(saves));
+  writeStoredJson(SAVES_KEY, saves, 'saved games');
+}
+
+function readLastSaveId(): string | null {
+  return localStorage.getItem(LAST_SAVE_ID_KEY);
 }
 
 function buildMeta(
@@ -82,7 +96,7 @@ export function saveGame(
   }
 
   writeAll(saves);
-  localStorage.setItem(LAST_SAVE_ID_KEY, saved.id);
+  writeStoredString(LAST_SAVE_ID_KEY, saved.id, 'last save pointer');
   return saved;
 }
 
@@ -104,14 +118,14 @@ export function deleteSave(id: string): void {
   }
   writeAll(next);
 
-  const lastId = localStorage.getItem(LAST_SAVE_ID_KEY);
+  const lastId = readLastSaveId();
   if (lastId === id) {
     localStorage.removeItem(LAST_SAVE_ID_KEY);
   }
 }
 
 export function getLastSaveId(): string | null {
-  return localStorage.getItem(LAST_SAVE_ID_KEY);
+  return readLastSaveId();
 }
 
 export function getLastSave(): SavedGame | undefined {

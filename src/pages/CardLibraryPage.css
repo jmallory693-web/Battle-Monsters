@@ -1,0 +1,39 @@
+.card-library-page__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.card-library-page__header-actions .page__link-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.card-library-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #3b3b54;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.card-library-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.card-library-controls input,
+.card-library-controls select {
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #1a1a28;
+  color: #eee;
+  font: inherit;
+}

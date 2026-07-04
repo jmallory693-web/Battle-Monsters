@@ -6,15 +6,17 @@
 }
 
 .card-library-item__actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
   width: 100%;
   max-width: 220px;
 }
 
 .card-library-item__edit,
-.card-library-item__delete {
-  flex: 1;
+.card-library-item__delete,
+.card-library-item__duplicate,
+.card-library-item__export {
   padding: 0.5rem;
   border-radius: 6px;
   font-size: 0.875rem;
@@ -36,4 +38,16 @@
   border: 1px solid rgba(239, 68, 68, 0.45);
   background: rgba(239, 68, 68, 0.12);
   color: #fca5a5;
+}
+
+.card-library-item__duplicate {
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.12);
+  color: #d8b4fe;
+}
+
+.card-library-item__export {
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
 }

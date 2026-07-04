@@ -8,6 +8,7 @@ import {
   type AutoDeckStyle,
 } from '../engine/autoDeckBuilder';
 import { resolveAiOpponentDeck, type AiOpponent } from './aiOpponentStorage';
+import { readStoredJson, writeStoredJson } from './localStorageSafety';
 
 const STORAGE_KEY = 'battle-monsters:tournaments';
 
@@ -226,22 +227,29 @@ function normalizeTournament(tournament: TournamentProgress): TournamentProgress
   };
 }
 
-function readRaw(): TournamentProgress[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter(isTournamentProgress)
-      .map((tournament) => normalizeTournament(tournament));
-  } catch {
-    return [];
+export function parseStoredTournaments(value: unknown): TournamentProgress[] {
+  if (!Array.isArray(value)) {
+    throw new Error('Expected a tournament array.');
   }
+  return value.map((item, index) => {
+    if (!isTournamentProgress(item)) {
+      throw new Error(`Tournament ${index + 1} is invalid.`);
+    }
+    return normalizeTournament(item);
+  });
+}
+
+function readRaw(): TournamentProgress[] {
+  return readStoredJson({
+    storageKey: STORAGE_KEY,
+    entityName: 'tournaments',
+    createEmpty: () => [],
+    parse: parseStoredTournaments,
+  });
 }
 
 function writeAll(tournaments: TournamentProgress[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tournaments));
+  writeStoredJson(STORAGE_KEY, tournaments, 'tournaments');
 }
 
 function generateOpponentName(index: number): string {

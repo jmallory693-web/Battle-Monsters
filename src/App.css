@@ -25,12 +25,14 @@
 .page__link-button {
   display: inline-block;
   padding: 0.5rem 1rem;
+  border: none;
   border-radius: 8px;
   background: #4c1d95;
   color: #fff;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.875rem;
+  cursor: pointer;
 }
 
 .library-edit-panel {
@@ -39,4 +41,79 @@
   border: 2px solid #3b82f6;
   border-radius: 12px;
   background: rgba(59, 130, 246, 0.06);
+}
+
+.page__error {
+  color: #fca5a5;
+  margin-top: 0.75rem;
+}
+
+.page__success {
+  color: #86efac;
+  margin-top: 0.75rem;
+}
+
+.home-backup-panel {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  border: 1px solid #3b3b54;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.home-backup-panel h2 {
+  margin-top: 0;
+}
+
+.home-backup-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.home-restore-preview {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #3b82f6;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.home-restore-preview h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+}
+
+.home-restore-preview__meta {
+  margin: 0 0 0.75rem;
+  color: #cbd5e1;
+}
+
+.home-restore-preview__list {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+}
+
+.home-restore-preview__list li {
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.home-restore-preview__warning {
+  color: #fcd34d;
+}
+
+.home-restore-preview__cancel {
+  padding: 0.5rem 1rem;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  background: transparent;
+  color: #e2e8f0;
+  font-weight: 600;
+  cursor: pointer;
 }

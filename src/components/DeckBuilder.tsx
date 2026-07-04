@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { COMMON_CREATURE_TYPES, type Card } from '../models/card';
 import {
   createDeck,
@@ -69,8 +69,8 @@ function labelAutoStyle(style: AutoDeckStyle): string {
 }
 
 export function DeckBuilder() {
-  const [cards, setCards] = useState<Card[]>(() => loadCards());
-  const [savedDecks, setSavedDecks] = useState<Deck[]>(() => loadDecks());
+  const [cards, setCards] = useState<Card[]>([]);
+  const [savedDecks, setSavedDecks] = useState<Deck[]>([]);
   const [deckName, setDeckName] = useState('');
   const [entries, setEntries] = useState<DeckEntry[]>([]);
   const [autoDeckName, setAutoDeckName] = useState('Auto Deck');
@@ -86,10 +86,33 @@ export function DeckBuilder() {
   const importCollectionInputRef = useRef<HTMLInputElement>(null);
 
   const refresh = useCallback(() => {
-    setCards(loadCards());
-    setSavedDecks(loadDecks());
+    const nextErrors: string[] = [];
+
+    try {
+      setCards(loadCards());
+    } catch (err) {
+      setCards([]);
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load cards.');
+    }
+
+    try {
+      setSavedDecks(loadDecks());
+    } catch (err) {
+      setSavedDecks([]);
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load decks.');
+    }
+
     setGeneratedDeck(null);
+    if (nextErrors.length > 0) {
+      setError(nextErrors[0]!);
+    } else {
+      setError(null);
+    }
   }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const total = countTotalCards({ entries });
   const validation = validateDeckLegality(
@@ -268,7 +291,12 @@ export function DeckBuilder() {
   }
 
   if (cards.length === 0) {
-    return <p className="deck-builder__empty">Create some cards first!</p>;
+    return (
+      <div>
+        {error && <p className="play-error">{error}</p>}
+        <p className="deck-builder__empty">Create some cards first!</p>
+      </div>
+    );
   }
 
   const cardsById = new Map(cards.map((c) => [c.id, c]));
@@ -416,7 +444,14 @@ export function DeckBuilder() {
             <ul className="auto-deck-panel__list" role="list">
               {generatedDeck.entries.map((entry) => {
                 const card = cardsById.get(entry.cardId);
-                if (!card) return null;
+                if (!card) {
+                  return (
+                    <li key={entry.cardId} className="auto-deck-panel__row">
+                      <span>Missing card: {entry.cardId} ×{entry.count}</span>
+                      <span className="auto-deck-panel__meta">This saved reference no longer exists.</span>
+                    </li>
+                  );
+                }
                 return (
                   <li key={entry.cardId} className="auto-deck-panel__row">
                     <span>
@@ -514,7 +549,16 @@ export function DeckBuilder() {
             ) : (
               entries.map((entry) => {
                 const card = cardsById.get(entry.cardId);
-                if (!card) return null;
+                if (!card) {
+                  return (
+                    <li key={entry.cardId} className="deck-sidebar__row">
+                      <span>Missing card: {entry.cardId} ×{entry.count}</span>
+                      <button type="button" onClick={() => removeCard(entry.cardId)}>
+                        −
+                      </button>
+                    </li>
+                  );
+                }
                 return (
                   <li key={entry.cardId} className="deck-sidebar__row">
                     <span>

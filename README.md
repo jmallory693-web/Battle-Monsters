@@ -1,6 +1,14 @@
 # Battle Monsters
 
+
+
 A browser-based custom trading card game. Create cards, build decks, and battle locally or against a simple AI opponent.
+
+
+
+## License / Usage
+
+This is a personal project made for fun. Feel free to use, modify, or build on it however you want. No attribution required, but I'd love to hear about cool things people make with it!
 
 ## Quick start (development)
 
@@ -9,7 +17,6 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Launch from Windows (desktop shortcut)
 

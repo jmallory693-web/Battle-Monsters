@@ -71,6 +71,7 @@ function isFinishedGame(tournament: TournamentProgress | null): boolean {
 export function TournamentsPage() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [cardsCount, setCardsCount] = useState(0);
+  const [aiOpponentCount, setAiOpponentCount] = useState(0);
   const [tournaments, setTournaments] = useState<TournamentProgress[]>([]);
   const [setup, setSetup] = useState<TournamentSetupState>(createDefaultSetup());
   const [activeTournament, setActiveTournament] = useState<TournamentProgress | null>(null);
@@ -80,12 +81,39 @@ export function TournamentsPage() {
   const aiRunningRef = useRef(false);
 
   const refresh = useCallback(() => {
-    const loadedDecks = loadDecks();
-    const loadedCards = loadCards();
-    const loadedTournaments = loadTournaments();
+    const nextErrors: string[] = [];
+    let loadedDecks: Deck[] = [];
+    let loadedCardsCount = 0;
+    let loadedTournaments: TournamentProgress[] = [];
+    let loadedAiOpponentCount = 0;
+
+    try {
+      loadedDecks = loadDecks();
+    } catch (err) {
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load decks.');
+    }
+
+    try {
+      loadedCardsCount = loadCards().length;
+    } catch (err) {
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load cards.');
+    }
+
+    try {
+      loadedTournaments = loadTournaments();
+    } catch (err) {
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load tournaments.');
+    }
+
+    try {
+      loadedAiOpponentCount = loadAiOpponents().length;
+    } catch (err) {
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load AI opponents.');
+    }
 
     setDecks(loadedDecks);
-    setCardsCount(loadedCards.length);
+    setCardsCount(loadedCardsCount);
+    setAiOpponentCount(loadedAiOpponentCount);
     setTournaments(loadedTournaments);
     setSetup((current) => ({
       ...current,
@@ -98,6 +126,12 @@ export function TournamentsPage() {
       if (!current) return null;
       return loadedTournaments.find((tournament) => tournament.id === current.id) ?? current;
     });
+    if (nextErrors.length > 0) {
+      setError(nextErrors[0]!);
+      setSuccess(null);
+    } else {
+      setError(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -528,12 +562,12 @@ export function TournamentsPage() {
             <div className="tournament-setup__notes">
               <p>Saved decks: {decks.length}</p>
               <p>Cards in library: {cardsCount}</p>
-              <p>AI opponents: {loadAiOpponents().length}</p>
+              <p>AI opponents: {aiOpponentCount}</p>
               <p>Opponent source: {labelSource(setup.opponentSource)}</p>
             </div>
 
             {setup.opponentSource === 'existingOpponents' &&
-              loadAiOpponents().length < setup.totalRounds && (
+              aiOpponentCount < setup.totalRounds && (
                 <p className="play-error">
                   You need at least {setup.totalRounds} AI opponents saved for this tournament setup.
                 </p>

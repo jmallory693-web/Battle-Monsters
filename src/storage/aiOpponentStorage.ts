@@ -1,6 +1,7 @@
 import type { Card } from '../models/card';
 import type { Deck } from '../models/deck';
 import { generateAutoDeck, type AutoDeckDifficulty, type AutoDeckStyle } from '../engine/autoDeckBuilder';
+import { readStoredJson, writeStoredJson } from './localStorageSafety';
 
 const STORAGE_KEY = 'battle-monsters:ai-opponents';
 
@@ -113,23 +114,34 @@ export function isAiOpponent(value: unknown): value is AiOpponent {
   );
 }
 
-function readRaw(): AiOpponent[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter(isAiOpponent)
-      .map((opponent) => normalizeAiOpponent(opponent))
-      .filter((opponent) => validateAiOpponent(opponent).length === 0);
-  } catch {
-    return [];
+export function parseStoredAiOpponents(value: unknown): AiOpponent[] {
+  if (!Array.isArray(value)) {
+    throw new Error('Expected an AI opponent array.');
   }
+  return value.map((item, index) => {
+    if (!isAiOpponent(item)) {
+      throw new Error(`AI opponent ${index + 1} is invalid.`);
+    }
+    const normalized = normalizeAiOpponent(item);
+    const validationErrors = validateAiOpponent(normalized);
+    if (validationErrors.length > 0) {
+      throw new Error(`AI opponent "${normalized.name || normalized.id}" is invalid: ${validationErrors[0]}`);
+    }
+    return normalized;
+  });
+}
+
+function readRaw(): AiOpponent[] {
+  return readStoredJson({
+    storageKey: STORAGE_KEY,
+    entityName: 'AI opponents',
+    createEmpty: () => [],
+    parse: parseStoredAiOpponents,
+  });
 }
 
 function writeAll(opponents: AiOpponent[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(opponents));
+  writeStoredJson(STORAGE_KEY, opponents, 'AI opponents');
 }
 
 export function loadAiOpponents(): AiOpponent[] {

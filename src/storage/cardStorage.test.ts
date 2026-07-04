@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadCards } from './cardStorage';
+import { cardWithId } from '../models/card';
+import { deleteCard, loadCards, saveCard } from './cardStorage';
 
 const CARDS_KEY = 'battle-monsters:cards';
+const DECKS_KEY = 'battle-monsters:decks';
 
 describe('cardStorage', () => {
   beforeEach(() => {
@@ -39,5 +41,41 @@ describe('cardStorage', () => {
 
     expect(cards).toHaveLength(1);
     expect(cards[0]?.creatureTypes).toEqual([]);
+  });
+
+  it('preserves corrupted raw card data under a recovery key', () => {
+    localStorage.setItem(CARDS_KEY, '{bad json');
+
+    expect(() => loadCards()).toThrow(/recovery copy was saved/i);
+
+    const recoveryRaw = localStorage.getItem('battle-monsters:recovery:battle-monsters:cards');
+    expect(recoveryRaw).toBeTruthy();
+    expect(recoveryRaw).toContain('{bad json');
+  });
+
+  it('blocks deleting a card while decks still use it', () => {
+    const card = cardWithId('used-card', {
+      name: 'Used Card',
+      imageUrl: 'data:image/webp;base64,used',
+      cost: 1,
+      attack: 2,
+      health: 2,
+      flavorText: '',
+      rarity: 'common',
+    });
+
+    saveCard(card);
+    localStorage.setItem(
+      DECKS_KEY,
+      JSON.stringify([
+        {
+          id: 'deck-1',
+          name: 'Rainbow Team',
+          entries: [{ cardId: 'used-card', count: 3 }],
+        },
+      ]),
+    );
+
+    expect(() => deleteCard('used-card')).toThrow(/Rainbow Team/);
   });
 });

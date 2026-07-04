@@ -148,3 +148,13 @@
   position: sticky;
   top: 1rem;
 }
+
+.card-form__export {
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #93c5fd;
+  font-weight: 600;
+  cursor: pointer;
+}

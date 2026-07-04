@@ -90,9 +90,28 @@ export function PlayPage() {
   const aiRunningRef = useRef(false);
 
   const refreshDeckData = useCallback(() => {
-    const loadedDecks = loadDecks();
-    const loadedCards = loadCards();
-    const loadedOpponents = loadAiOpponents();
+    const nextErrors: string[] = [];
+    let loadedDecks: Deck[] = [];
+    let loadedCards: Card[] = [];
+    let loadedOpponents: AiOpponent[] = [];
+
+    try {
+      loadedDecks = loadDecks();
+    } catch (err) {
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load decks.');
+    }
+
+    try {
+      loadedCards = loadCards();
+    } catch (err) {
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load cards.');
+    }
+
+    try {
+      loadedOpponents = loadAiOpponents();
+    } catch (err) {
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load AI opponents.');
+    }
 
     setDecks(loadedDecks);
     setCards(loadedCards);
@@ -113,11 +132,25 @@ export function PlayPage() {
       if (loadedOpponents.some((opponent) => opponent.id === current)) return current;
       return loadedOpponents[0]?.id ?? '';
     });
+    if (nextErrors.length > 0) {
+      setError(nextErrors[0]!);
+      setSuccess(null);
+    } else {
+      setError(null);
+    }
   }, []);
 
   const refreshSaves = useCallback(() => {
-    setSaves(loadAllSaves());
-    setCanContinue(hasLastSave());
+    try {
+      setSaves(loadAllSaves());
+      setCanContinue(hasLastSave());
+      setError(null);
+    } catch (err) {
+      setSaves([]);
+      setCanContinue(false);
+      setError(err instanceof Error ? err.message : 'Could not load saved games.');
+      setSuccess(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -294,21 +327,25 @@ export function PlayPage() {
   function handleContinueLastGame() {
     setError(null);
     setSuccess(null);
-    const last = getLastSave();
-    if (!last) {
-      setError('No saved game to continue.');
-      return;
+    try {
+      const last = getLastSave();
+      if (!last) {
+        setError('No saved game to continue.');
+        return;
+      }
+      if (last.gameState.winner !== null) {
+        setError('Last saved game is already finished.');
+        refreshSaves();
+        return;
+      }
+      setGame(last.gameState);
+      setGameMode(last.gameMode);
+      setCurrentSaveId(last.id);
+      setView('playing');
+      setSuccess(`Continued "${last.name}".`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not continue the last game.');
     }
-    if (last.gameState.winner !== null) {
-      setError('Last saved game is already finished.');
-      refreshSaves();
-      return;
-    }
-    setGame(last.gameState);
-    setGameMode(last.gameMode);
-    setCurrentSaveId(last.id);
-    setView('playing');
-    setSuccess(`Continued "${last.name}".`);
   }
 
   function handleLoadSave(save: SavedGame) {
@@ -705,7 +742,16 @@ export function PlayPage() {
                     <ul className="play-setup__preview-list" role="list">
                       {aiPreviewDeck.entries.map((entry) => {
                         const card = cardsById.get(entry.cardId);
-                        if (!card) return null;
+                        if (!card) {
+                          return (
+                            <li key={entry.cardId} className="play-setup__preview-row">
+                              <span>Missing card: {entry.cardId} ×{entry.count}</span>
+                              <span className="play-setup__preview-meta">
+                                This saved reference no longer exists.
+                              </span>
+                            </li>
+                          );
+                        }
                         return (
                           <li key={entry.cardId} className="play-setup__preview-row">
                             <span>

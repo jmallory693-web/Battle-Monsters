@@ -36,6 +36,18 @@ export function createNewGameFromDecks(
   cards: Card[],
 ): GameState {
   const cardsById = new Map(cards.map((c) => [c.id, c]));
+
+  for (const entry of deck1.entries) {
+    if (!cardsById.has(entry.cardId)) {
+      throw new Error(`Deck "${deck1.name}" is missing card id: ${entry.cardId}`);
+    }
+  }
+  for (const entry of deck2.entries) {
+    if (!cardsById.has(entry.cardId)) {
+      throw new Error(`Deck "${deck2.name}" is missing card id: ${entry.cardId}`);
+    }
+  }
+
   const p1 = expandDeckEntries(deck1.entries, cardsById);
   const p2 = expandDeckEntries(deck2.entries, cardsById);
   return createNewGame(p1, p2);

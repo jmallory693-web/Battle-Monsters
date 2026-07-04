@@ -88,10 +88,31 @@ export function AiOpponentsPage() {
   const cardsById = useMemo(() => new Map(cards.map((card) => [card.id, card])), [cards]);
 
   const refresh = useCallback(() => {
-    const loadedDecks = loadDecks();
-    setOpponents(loadAiOpponents());
-    setDecks(loadedDecks);
-    setCards(loadCards());
+    const nextErrors: string[] = [];
+    let loadedDecks: Deck[] = [];
+
+    try {
+      loadedDecks = loadDecks();
+      setDecks(loadedDecks);
+    } catch (err) {
+      setDecks([]);
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load decks.');
+    }
+
+    try {
+      setOpponents(loadAiOpponents());
+    } catch (err) {
+      setOpponents([]);
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load AI opponents.');
+    }
+
+    try {
+      setCards(loadCards());
+    } catch (err) {
+      setCards([]);
+      nextErrors.push(err instanceof Error ? err.message : 'Could not load cards.');
+    }
+
     setForm((current) => ({
       ...current,
       savedDeckId:
@@ -99,6 +120,12 @@ export function AiOpponentsPage() {
           ? current.savedDeckId
           : loadedDecks[0]?.id ?? '',
     }));
+    if (nextErrors.length > 0) {
+      setError(nextErrors[0]!);
+      setSuccess(null);
+    } else {
+      setError(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -449,7 +476,14 @@ export function AiOpponentsPage() {
           <ul className="ai-opponents-preview__list" role="list">
             {previewDeck.entries.map((entry) => {
               const card = cardsById.get(entry.cardId);
-              if (!card) return null;
+              if (!card) {
+                return (
+                  <li key={entry.cardId} className="ai-opponents-preview__row">
+                    <span>Missing card: {entry.cardId} ×{entry.count}</span>
+                    <span className="ai-opponents-preview__meta">This saved reference no longer exists.</span>
+                  </li>
+                );
+              }
               return (
                 <li key={entry.cardId} className="ai-opponents-preview__row">
                   <span>

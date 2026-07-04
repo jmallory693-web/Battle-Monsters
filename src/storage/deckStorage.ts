@@ -1,6 +1,8 @@
 import { type Deck, normalizeEntries, validateDeckLegality } from '../models/deck';
 import type { Card } from '../models/card';
 import { loadCards } from './cardStorage';
+import { loadAiOpponents } from './aiOpponentStorage';
+import { readStoredJson, writeStoredJson } from './localStorageSafety';
 
 const STORAGE_KEY = 'battle-monsters:decks';
 
@@ -21,26 +23,33 @@ function isDeck(value: unknown): value is Deck {
   );
 }
 
-function readRaw(): Deck[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .filter(isDeck)
-      .map((deck) => ({
-        ...deck,
-        name: deck.name.trim(),
-        entries: normalizeEntries(deck.entries),
-      }));
-  } catch {
-    return [];
+export function parseStoredDecks(value: unknown): Deck[] {
+  if (!Array.isArray(value)) {
+    throw new Error('Expected a deck array.');
   }
+  return value.map((item, index) => {
+    if (!isDeck(item)) {
+      throw new Error(`Deck ${index + 1} is invalid.`);
+    }
+    return {
+      ...item,
+      name: item.name.trim(),
+      entries: normalizeEntries(item.entries),
+    };
+  });
+}
+
+function readRaw(): Deck[] {
+  return readStoredJson({
+    storageKey: STORAGE_KEY,
+    entityName: 'decks',
+    createEmpty: () => [],
+    parse: parseStoredDecks,
+  });
 }
 
 function writeAll(decks: Deck[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(decks));
+  writeStoredJson(STORAGE_KEY, decks, 'decks');
 }
 
 export function saveDeck(deck: Deck, cards: Card[] = loadCards()): void {
@@ -67,8 +76,19 @@ export function loadDecks(): Deck[] {
 
 export function deleteDeck(id: string): void {
   const decks = readRaw();
+  const deck = decks.find((candidate) => candidate.id === id);
+  if (!deck) throw new Error(`Deck with id "${id}" not found.`);
+
+  const dependentOpponents = loadAiOpponents()
+    .filter((opponent) => opponent.deckSource === 'savedDeck' && opponent.savedDeckId === id)
+    .map((opponent) => opponent.name);
+  if (dependentOpponents.length > 0) {
+    throw new Error(
+      `Cannot delete deck "${deck.name}" because it is used by ${dependentOpponents.length} AI opponent(s): ${dependentOpponents.join(', ')}.`,
+    );
+  }
+
   const next = decks.filter((d) => d.id !== id);
-  if (next.length === decks.length) throw new Error(`Deck with id "${id}" not found.`);
   writeAll(next);
 }
 

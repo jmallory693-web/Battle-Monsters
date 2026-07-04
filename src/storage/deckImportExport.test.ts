@@ -1,5 +1,5 @@
 import { beforeEach, describe, it, expect, vi } from 'vitest';
-import type { Card } from '../models/card';
+import { DEFAULT_CARD_VISUAL_STYLE, type Card } from '../models/card';
 import type { Deck } from '../models/deck';
 import {
   buildDeckExportFile,
@@ -28,6 +28,7 @@ function makeCard(id: string, overrides: Partial<Card> = {}): Card {
     flavorText: '',
     rarity: overrides.rarity ?? 'common',
     creatureTypes: overrides.creatureTypes ?? [],
+    visualStyle: overrides.visualStyle ?? DEFAULT_CARD_VISUAL_STYLE,
     ...overrides,
   };
 }
@@ -99,6 +100,17 @@ describe('export', () => {
     expect(exported.cards).toHaveLength(19);
     const ids = exported.cards.map((c) => c.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('exporting all decks fails when a saved deck references a missing card', () => {
+    const { deck, cards } = makeLegalDeckBundle('d1', 'Broken Deck', 'broken');
+    const missingCardId = deck.entries[0]!.cardId;
+    setupStorage(
+      cards.filter((card) => card.id !== missingCardId),
+      [deck],
+    );
+
+    expect(() => exportAllDecks()).toThrow(/Broken Deck/);
   });
 
   it('collectCardsForDecks deduplicates card ids', () => {

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
+  cardFromUnknown,
   createCard,
+  DEFAULT_CARD_VISUAL_STYLE,
   validateCardInput,
   cardWithId,
   normalizeCardInput,
@@ -102,5 +104,27 @@ describe('normalizeCardInput', () => {
     });
 
     expect(normalized.creatureTypes).toEqual(['Cat', 'Fairy']);
+  });
+
+  it('applies the default visual style when one is not provided', () => {
+    const normalized = normalizeCardInput(validInput);
+    expect(normalized.visualStyle).toEqual(DEFAULT_CARD_VISUAL_STYLE);
+  });
+});
+
+describe('cardFromUnknown', () => {
+  it('keeps older saved cards backward compatible with the default visual style', () => {
+    const restored = cardFromUnknown({
+      id: 'legacy-card',
+      name: 'Legacy Cat',
+      imageUrl: 'data:image/jpeg;base64,abc',
+      cost: 2,
+      attack: 3,
+      health: 4,
+      flavorText: 'Old save',
+      rarity: 'common',
+    });
+
+    expect(restored?.visualStyle).toEqual(DEFAULT_CARD_VISUAL_STYLE);
   });
 });

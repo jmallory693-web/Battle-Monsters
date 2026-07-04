@@ -1,7 +1,12 @@
 import { useState, type FormEvent, type ChangeEvent } from 'react';
 import {
   COMMON_CREATURE_TYPES,
+  CARD_BACKGROUND_STYLES,
+  CARD_BORDER_STYLES,
   createCard,
+  CARD_FRAME_THEMES,
+  CARD_TEXT_COLORS,
+  DEFAULT_CARD_VISUAL_STYLE,
   cardWithId,
   validateCardInput,
   normalizeCardInput,
@@ -15,6 +20,7 @@ import {
 import { saveCard, updateCard } from '../storage/cardStorage';
 import { getDecksUsingCard } from '../storage/deckStorage';
 import { resizeImageToDataUrl } from '../utils/imageResize';
+import { exportCardAsImage } from '../utils/cardImageExport';
 import { CardPreview, type CardPreviewData } from './CardPreview';
 import './CardForm.css';
 
@@ -27,27 +33,37 @@ const EMPTY_FORM: CardPreviewData = {
   flavorText: '',
   rarity: 'common',
   creatureTypes: [],
+  visualStyle: DEFAULT_CARD_VISUAL_STYLE,
 };
 
 interface CardFormProps {
   editingCard?: Card;
+  initialCardInput?: CardPreviewData;
+  title?: string;
   onSaved?: () => void;
   onCancel?: () => void;
 }
 
-export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
+export function CardForm({ editingCard, initialCardInput, title, onSaved, onCancel }: CardFormProps) {
   const isEdit = editingCard !== undefined;
 
   const [form, setForm] = useState<CardPreviewData>(() =>
-    editingCard ? cardToInput(editingCard) : EMPTY_FORM,
+    editingCard ? cardToInput(editingCard) : initialCardInput ?? EMPTY_FORM,
   );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [imageProcessing, setImageProcessing] = useState(false);
   const [customCreatureType, setCustomCreatureType] = useState('');
 
-  const decksUsingCard =
-    isEdit && editingCard ? getDecksUsingCard(editingCard.id) : [];
+  let decksUsingCard: ReturnType<typeof getDecksUsingCard> = [];
+  let deckUsageError: string | null = null;
+  if (isEdit && editingCard) {
+    try {
+      decksUsingCard = getDecksUsingCard(editingCard.id);
+    } catch (err) {
+      deckUsageError = err instanceof Error ? err.message : 'Could not load deck usage.';
+    }
+  }
 
   function updateField<K extends keyof CardPreviewData>(key: K, value: CardPreviewData[K]) {
     setSuccessMessage(null);
@@ -87,6 +103,16 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
     setCreatureTypes((form.creatureTypes ?? []).filter((existing) => existing !== type));
   }
 
+  function updateVisualStyle<K extends keyof NonNullable<CardPreviewData['visualStyle']>>(
+    key: K,
+    value: NonNullable<CardPreviewData['visualStyle']>[K],
+  ) {
+    updateField('visualStyle', {
+      ...(form.visualStyle ?? DEFAULT_CARD_VISUAL_STYLE),
+      [key]: value,
+    });
+  }
+
   async function handleImageChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -107,10 +133,21 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
   }
 
   function resetForm() {
-    setForm(EMPTY_FORM);
+    setForm(initialCardInput ?? EMPTY_FORM);
     setCustomCreatureType('');
     const input = document.getElementById('card-image-input') as HTMLInputElement | null;
     if (input) input.value = '';
+  }
+
+  async function handleExportImage() {
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    try {
+      await exportCardAsImage(form);
+      setSuccessMessage(`Exported "${form.name.trim() || 'Unnamed Card'}" as an image.`);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Could not export card image.');
+    }
   }
 
   function handleSubmit(e: FormEvent) {
@@ -122,6 +159,11 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
     const errors = validateCardInput(normalized);
     if (errors.length > 0) {
       setErrorMessage(errors[0]);
+      return;
+    }
+
+    if (deckUsageError) {
+      setErrorMessage(deckUsageError);
       return;
     }
 
@@ -155,7 +197,7 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
   return (
     <div className="card-form-layout">
       <form className="card-form" onSubmit={handleSubmit}>
-        <h2 className="card-form__title">{isEdit ? 'Edit Card' : 'New Card'}</h2>
+        <h2 className="card-form__title">{isEdit ? 'Edit Card' : title ?? 'New Card'}</h2>
 
         {isEdit && decksUsingCard.length > 0 && (
           <p className="card-form__message card-form__message--warn" role="status">
@@ -172,6 +214,11 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
         {errorMessage && (
           <p className="card-form__message card-form__message--error" role="alert">
             {errorMessage}
+          </p>
+        )}
+        {deckUsageError && !errorMessage && (
+          <p className="card-form__message card-form__message--error" role="alert">
+            {deckUsageError}
           </p>
         )}
 
@@ -261,6 +308,105 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
         </label>
 
         <div className="card-form__field">
+          <span>Card style</span>
+          <div className="card-form__row">
+            <label className="card-form__field">
+              <span>Frame theme</span>
+              <select
+                value={form.visualStyle?.frameTheme ?? DEFAULT_CARD_VISUAL_STYLE.frameTheme}
+                onChange={(e) => updateVisualStyle('frameTheme', e.target.value as typeof DEFAULT_CARD_VISUAL_STYLE.frameTheme)}
+              >
+                {CARD_FRAME_THEMES.map((theme) => (
+                  <option key={theme} value={theme}>
+                    {theme[0].toUpperCase() + theme.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="card-form__field">
+              <span>Background</span>
+              <select
+                value={
+                  form.visualStyle?.backgroundStyle ?? DEFAULT_CARD_VISUAL_STYLE.backgroundStyle
+                }
+                onChange={(e) =>
+                  updateVisualStyle(
+                    'backgroundStyle',
+                    e.target.value as typeof DEFAULT_CARD_VISUAL_STYLE.backgroundStyle,
+                  )
+                }
+              >
+                {CARD_BACKGROUND_STYLES.map((background) => (
+                  <option key={background} value={background}>
+                    {background === 'rarity'
+                      ? 'Match rarity'
+                      : background[0].toUpperCase() + background.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="card-form__field">
+              <span>Border style</span>
+              <select
+                value={form.visualStyle?.borderStyle ?? DEFAULT_CARD_VISUAL_STYLE.borderStyle}
+                onChange={(e) =>
+                  updateVisualStyle(
+                    'borderStyle',
+                    e.target.value as typeof DEFAULT_CARD_VISUAL_STYLE.borderStyle,
+                  )
+                }
+              >
+                {CARD_BORDER_STYLES.map((style) => (
+                  <option key={style} value={style}>
+                    {style[0].toUpperCase() + style.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="card-form__row">
+            <label className="card-form__field">
+              <span>Text color</span>
+              <select
+                value={form.visualStyle?.textColor ?? DEFAULT_CARD_VISUAL_STYLE.textColor}
+                onChange={(e) =>
+                  updateVisualStyle(
+                    'textColor',
+                    e.target.value as typeof DEFAULT_CARD_VISUAL_STYLE.textColor,
+                  )
+                }
+              >
+                {CARD_TEXT_COLORS.map((color) => (
+                  <option key={color} value={color}>
+                    {color[0].toUpperCase() + color.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="card-form__field">
+              <span>Collection name (optional)</span>
+              <input
+                type="text"
+                value={form.visualStyle?.collectionName ?? ''}
+                onChange={(e) => updateVisualStyle('collectionName', e.target.value)}
+                maxLength={CARD_LIMITS.collectionNameMaxLength}
+                placeholder="Moonlight Set"
+              />
+            </label>
+            <label className="card-form__field">
+              <span>Artist / creator (optional)</span>
+              <input
+                type="text"
+                value={form.visualStyle?.artistName ?? ''}
+                onChange={(e) => updateVisualStyle('artistName', e.target.value)}
+                maxLength={CARD_LIMITS.artistNameMaxLength}
+                placeholder="Your name"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="card-form__field">
           <span>
             Creature types (optional, up to {CARD_LIMITS.creatureTypesMaxCount})
           </span>
@@ -318,7 +464,7 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
           <button type="submit" className="card-form__submit" disabled={imageProcessing}>
             {isEdit ? 'Save Changes' : 'Save Card'}
           </button>
-          {isEdit && onCancel && (
+          {onCancel && (
             <button type="button" className="card-form__cancel" onClick={onCancel}>
               Cancel
             </button>
@@ -329,6 +475,9 @@ export function CardForm({ editingCard, onSaved, onCancel }: CardFormProps) {
       <aside className="card-form__preview-panel">
         <h2 className="card-form__title">Preview</h2>
         <CardPreview card={form} />
+        <button type="button" className="card-form__export" onClick={() => void handleExportImage()}>
+          Export Card as Image
+        </button>
       </aside>
     </div>
   );

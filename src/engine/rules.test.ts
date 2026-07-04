@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Card } from '../models/card';
+import { DEFAULT_CARD_VISUAL_STYLE, type Card } from '../models/card';
 import type { BoardMonster, CardInstance, GameState, PlayerState } from './gameState';
 import {
   createBoardMonster,
@@ -34,6 +34,7 @@ function makeCard(overrides: Partial<Card> = {}): Card {
     flavorText: '',
     rarity: 'common',
     creatureTypes: overrides.creatureTypes ?? [],
+    visualStyle: overrides.visualStyle ?? DEFAULT_CARD_VISUAL_STYLE,
     ...overrides,
   };
 }
